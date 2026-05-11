@@ -12,8 +12,22 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('order_details', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        $table->id();
+
+        $table->foreignId('order_id')->constrained();
+
+        $table->foreignId('service_id')
+            ->nullable()
+            ->constrained();
+
+        $table->foreignId('product_id')
+            ->nullable()
+            ->constrained();
+
+        $table->integer('qty');
+        $table->decimal('subtotal',10,2);
+
+        $table->timestamps();
         });
     }
 
