@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -16,20 +17,29 @@ class ProductController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'nama_produk' => 'required',
-            'harga' => 'required|numeric',
-            'stok' => 'required|integer'
-        ]);
+{
+    $validated = $request->validate([
+        'nama_produk' => 'required',
+        'harga' => 'required|numeric',
+        'stok' => 'required|integer',
+        'gambar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
+    ]);
 
-        $product = Product::create($validated);
+    // upload gambar
+    if ($request->hasFile('gambar')) {
 
-        return response()->json([
-            'message' => 'Product berhasil ditambahkan',
-            'data' => $product
-        ], 201);
+        $validated['gambar'] =
+            $request->file('gambar')
+                    ->store('products', 'public');
     }
+
+    $product = Product::create($validated);
+
+    return response()->json([
+        'message' => 'Product berhasil ditambahkan',
+        'data' => $product
+    ], 201);
+}
 
     public function show(string $id)
     {
@@ -39,22 +49,38 @@ class ProductController extends Controller
     }
 
     public function update(Request $request, string $id)
-    {
-        $product = Product::findOrFail($id);
+{
+    $product = Product::findOrFail($id);
 
-        $validated = $request->validate([
-            'nama_produk' => 'required',
-            'harga' => 'required|numeric',
-            'stok' => 'required|integer'
-        ]);
+    $validated = $request->validate([
+        'nama_produk' => 'required',
+        'harga' => 'required|numeric',
+        'stok' => 'required|integer',
+        'gambar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
+    ]);
 
-        $product->update($validated);
+    // upload gambar baru
+    if ($request->hasFile('gambar')) {
 
-        return response()->json([
-            'message' => 'Product berhasil diupdate',
-            'data' => $product
-        ]);
+        // hapus gambar lama
+        if ($product->gambar) {
+
+            Storage::disk('public')
+                ->delete($product->gambar);
+        }
+
+        $validated['gambar'] =
+            $request->file('gambar')
+                    ->store('products', 'public');
     }
+
+    $product->update($validated);
+
+    return response()->json([
+        'message' => 'Product berhasil diupdate',
+        'data' => $product
+    ]);
+}
 
     public function destroy(string $id)
     {
