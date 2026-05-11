@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 use App\Models\Order;
 use App\Models\OrderDetail;
@@ -168,4 +169,22 @@ class OrderController extends Controller
             'message' => 'Transaksi berhasil dihapus'
         ]);
     }
+
+    public function invoice($id)
+{
+    $order = Order::with([
+        'customer',
+        'details.service',
+        'details.product'
+    ])->findOrFail($id);
+
+    $pdf = Pdf::loadView(
+        'invoice',
+        compact('order')
+    );
+
+    return $pdf->download(
+        'invoice-'.$order->id.'.pdf'
+    );
+}
 }
